@@ -1,26 +1,18 @@
-version: "3.9"
-
 services:
-
   backend:
-
     build: ./backend
-
     container_name: satellite_backend
-
     ports:
       - "8000:8000"
-
     volumes:
       - ./backend:/app
-
     restart: always
 
   frontend:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: satellite_frontend
     ports:
       - "3000:80"
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html
     restart: always
