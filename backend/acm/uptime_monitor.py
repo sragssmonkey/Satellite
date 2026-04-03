@@ -13,6 +13,9 @@ def compute_uptime_score(objects):
         if sat["outage_seconds"] > 0:
             degraded += 1
 
+    if total == 0:
+        return 100.0
+
     uptime = (
         (total - degraded)
         / total

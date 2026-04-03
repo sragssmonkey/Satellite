@@ -33,6 +33,9 @@ def schedule_maneuver(data: dict):
         "projected_mass_remaining_kg": sat["mass"]
     }
 
+    total_fuel = 0.0
+    current_mass = sat["mass"]
+
     for seq in data["maneuver_sequence"]:
 
         dv = np.array([
@@ -44,9 +47,11 @@ def schedule_maneuver(data: dict):
         if np.linalg.norm(dv) > MAX_DV:
             return {"status":"REJECTED","reason":"Delta-V exceeds limit"}
 
-        fuel = fuel_required(sat["mass"], dv)
+        fuel = fuel_required(current_mass, dv)
+        total_fuel += fuel
+        current_mass -= fuel
 
-        if fuel > sat["fuel"]:
+        if total_fuel > sat["fuel"]:
             return {"status":"REJECTED","reason":"Insufficient fuel"}
 
         for station in stations:
@@ -55,15 +60,15 @@ def schedule_maneuver(data: dict):
                 break
 
         validation["sufficient_fuel"] = True
-        validation["projected_mass_remaining_kg"] = sat["mass"] - fuel
+        validation["projected_mass_remaining_kg"] = current_mass
 
     if not validation["ground_station_los"]:
         return {"status":"REJECTED","reason":"No LOS to ground station"}
 
     add_maneuver(data)
 
-    sat["fuel"] -= fuel
-    sat["mass"] -= fuel
+    sat["fuel"] -= total_fuel
+    sat["mass"] -= total_fuel
 
     return {
         "status":"SCHEDULED",

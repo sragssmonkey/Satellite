@@ -1,9 +1,9 @@
+# backend/acm/risk_model.py
 def compute_collision_risk(tca, miss_distance):
-
-    if miss_distance < 0.5:
+    if miss_distance < 0.1:    # < 100m = CRITICAL
         return "HIGH"
-
-    if miss_distance < 0.2:
+    if miss_distance < 1.0:    # < 1km = WARNING
         return "MEDIUM"
-
-    return "LOW"
+    if miss_distance < 5.0:    # < 5km = CAUTION
+        return "LOW"
+    return "SAFE"

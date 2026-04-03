@@ -18,6 +18,9 @@ from logs.efficiency_log import log_efficiency
 
 from pydantic import BaseModel
 
+import datetime
+
+BASE_TIME = datetime.datetime(2026, 3, 12, 8, 0, 0, tzinfo=datetime.timezone.utc)
 
 # -------------------------
 # CONSTANTS (from spec)
@@ -61,20 +64,21 @@ def simulate(data: StepRequest):
         state = np.array(obj["state"], dtype=float)
 
         obj["state"] = rk4_step(state, dt)
-        # -------------------------
-        # ⭐ CHECK SLOT DRIFT
-        # -------------------------
 
-        outages = check_station_keeping(
-            objects,
-            dt
-        )
-        from logs.outage_log import log_outage
+    # -------------------------
+    # ⭐ CHECK SLOT DRIFT
+    # -------------------------
 
-        log_outage(
-            current_time,
-            outages
-        )
+    outages = check_station_keeping(
+        objects,
+        dt
+    )
+    from logs.outage_log import log_outage
+
+    log_outage(
+        current_time,
+        outages
+    )
     current_time += dt
 
 
@@ -259,9 +263,11 @@ def simulate(data: StepRequest):
     # RETURN RESULT
     # -------------------------
 
+    ts = BASE_TIME + datetime.timedelta(seconds=current_time)
+
     return {
         "status": "STEP_COMPLETE",
-        "new_timestamp": current_time,
+        "new_timestamp": ts.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
         "collisions_detected": collisions,
         "maneuvers_executed": maneuvers_executed,
         "uptime_percent": round(uptime, 2)

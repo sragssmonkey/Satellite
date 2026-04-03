@@ -15,3 +15,12 @@ services:
       - ./backend:/app
 
     restart: always
+
+  frontend:
+    image: nginx:alpine
+    container_name: satellite_frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+    restart: always

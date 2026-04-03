@@ -11,8 +11,8 @@ def update_object(obj_id, state, obj_type):
             "fuel": 50.0,
             "mass": 550.0,
             "initial_fuel":50.0,
-            "last_burn": -10000,
-            "slot_position": state[:3].copy(),
+            "last_burn_time": -10000,
+            "slot_position": list(state[:3]),
             "outage_seconds": 0
         }
 

@@ -18,3 +18,5 @@ node_modules/
 .vscode/
 
 docker-compose.override.yml
+
+**/api_response.json
