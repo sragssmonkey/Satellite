@@ -102,9 +102,6 @@ function App() {
   const [hoverTarget, setHoverTarget] = useState(null);
   const [selectedSat, setSelectedSat] = useState(null);
   const [activeTab, setActiveTab] = useState('map'); // map | bullseye | telemetry | gantt
-  const [showDebris, setShowDebris] = useState(true);
-  const [showSatellites, setShowSatellites] = useState(true);
-  const [zoomLevel, setZoomLevel] = useState(1); // 1 = normal, 0.5 = zoomed out, 2 = zoomed in
 
   // Stats
   const totalSats = simData.satellites.length;
@@ -203,19 +200,16 @@ function App() {
       // Terminator overlay
       drawTerminator(ctx, projection, w, h);
 
-      // Debris - with zoom-based filtering
-      if (showDebris && simData.debris_cloud.length > 0) {
+      // Debris
+      if (simData.debris_cloud.length > 0) {
         ctx.fillStyle = C.DEBRIS;
-        const debrisStep = zoomLevel < 1 ? Math.ceil(1 / zoomLevel) : 1; // Show fewer when zoomed out
-        simData.debris_cloud.forEach((d, idx) => {
-          if (idx % debrisStep !== 0) return; // Skip some debris when zoomed out
+        simData.debris_cloud.forEach(d => {
           const coords = projection([d[2], d[1]]);
           if (coords) { ctx.beginPath(); ctx.arc(coords[0], coords[1], 1.2, 0, 2 * Math.PI); ctx.fill(); }
         });
       }
 
       // Satellites with trails + predicted paths
-      if (showSatellites) {
       simData.satellites.forEach(sat => {
         const coords = projection([sat.lon, sat.lat]);
         if (!coords) return;
@@ -248,11 +242,11 @@ function App() {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Glow for non-nominal (reduced glow)
+        // Glow for non-nominal
         if (sat.status !== 'NOMINAL') {
           ctx.beginPath();
-          ctx.arc(coords[0], coords[1], 7, 0, 2 * Math.PI);
-          ctx.fillStyle = sat.status === 'EOL_PENDING' ? 'rgba(255,51,68,0.15)' : 'rgba(255,184,0,0.1)';
+          ctx.arc(coords[0], coords[1], 9, 0, 2 * Math.PI);
+          ctx.fillStyle = sat.status === 'EOL_PENDING' ? 'rgba(255,51,68,0.25)' : 'rgba(255,184,0,0.2)';
           ctx.fill();
         }
 
@@ -285,7 +279,6 @@ function App() {
           ctx.setLineDash([]);
         }
       });
-      }
 
       ctx.restore();
       rafId = requestAnimationFrame(render);
@@ -293,7 +286,7 @@ function App() {
 
     render();
     return () => cancelAnimationFrame(rafId);
-  }, [worldData, simData, hoverTarget, selectedSat, showDebris, showSatellites, zoomLevel]);
+  }, [worldData, simData, hoverTarget, selectedSat]);
 
   // 5. Bullseye (Polar Chart) Canvas
   useEffect(() => {
@@ -538,54 +531,6 @@ function App() {
               <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 26, fontWeight: 700, color, lineHeight: 1 }}>{value}</div>
             </div>
           ))}
-        </div>
-
-        {/* Map Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 0', borderTop: '1px solid rgba(0,180,255,0.08)', borderBottom: '1px solid rgba(0,180,255,0.08)' }}>
-          <div style={{ fontSize: 9, color: '#4a6a7a', letterSpacing: 1 }}>MAP LAYERS</div>
-          <button onClick={() => setShowDebris(!showDebris)} style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
-            background: showDebris ? 'rgba(255,255,255,0.08)' : 'transparent',
-            border: showDebris ? '1px solid rgba(200,200,200,0.2)' : '1px solid transparent',
-            borderRadius: 4, color: showDebris ? '#b8d4e8' : '#4a6a7a', cursor: 'pointer',
-            fontSize: 10, fontWeight: 600, transition: 'all 0.15s',
-          }}>
-            {showDebris ? '✓' : '○'} DEBRIS CLOUD
-          </button>
-          <button onClick={() => setShowSatellites(!showSatellites)} style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px',
-            background: showSatellites ? 'rgba(0,200,255,0.08)' : 'transparent',
-            border: showSatellites ? '1px solid rgba(0,200,255,0.25)' : '1px solid transparent',
-            borderRadius: 4, color: showSatellites ? '#00c8ff' : '#4a6a7a', cursor: 'pointer',
-            fontSize: 10, fontWeight: 600, transition: 'all 0.15s',
-          }}>
-            {showSatellites ? '✓' : '○'} SATELLITES
-          </button>
-        </div>
-
-        {/* Zoom Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 0', borderBottom: '1px solid rgba(0,180,255,0.08)' }}>
-          <div style={{ fontSize: 9, color: '#4a6a7a', letterSpacing: 1 }}>ZOOM LEVEL</div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={() => setZoomLevel(0.5)} style={{
-              flex: 1, padding: '6px 8px', background: zoomLevel === 0.5 ? 'rgba(255,184,0,0.15)' : 'transparent',
-              border: zoomLevel === 0.5 ? '1px solid rgba(255,184,0,0.4)' : '1px solid rgba(0,180,255,0.1)',
-              borderRadius: 4, color: zoomLevel === 0.5 ? '#ffb800' : '#4a6a7a', cursor: 'pointer',
-              fontSize: 9, fontWeight: 600, transition: 'all 0.15s',
-            }}>OUT</button>
-            <button onClick={() => setZoomLevel(1)} style={{
-              flex: 1, padding: '6px 8px', background: zoomLevel === 1 ? 'rgba(0,200,255,0.15)' : 'transparent',
-              border: zoomLevel === 1 ? '1px solid rgba(0,200,255,0.4)' : '1px solid rgba(0,180,255,0.1)',
-              borderRadius: 4, color: zoomLevel === 1 ? '#00c8ff' : '#4a6a7a', cursor: 'pointer',
-              fontSize: 9, fontWeight: 600, transition: 'all 0.15s',
-            }}>NORM</button>
-            <button onClick={() => setZoomLevel(2)} style={{
-              flex: 1, padding: '6px 8px', background: zoomLevel === 2 ? 'rgba(0,255,157,0.15)' : 'transparent',
-              border: zoomLevel === 2 ? '1px solid rgba(0,255,157,0.4)' : '1px solid rgba(0,180,255,0.1)',
-              borderRadius: 4, color: zoomLevel === 2 ? '#00ff9d' : '#4a6a7a', cursor: 'pointer',
-              fontSize: 9, fontWeight: 600, transition: 'all 0.15s',
-            }}>IN</button>
-          </div>
         </div>
 
         {/* Nav Tabs */}
