@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   backend:
@@ -17,10 +15,8 @@ services:
     restart: always
 
   frontend:
-    image: nginx:alpine
+    build: ./frontend
     container_name: satellite_frontend
     ports:
       - "3000:80"
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html
     restart: always
